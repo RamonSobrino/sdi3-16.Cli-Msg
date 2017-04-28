@@ -9,6 +9,7 @@ import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
+import javax.jms.TextMessage;
 
 import alb.util.console.Console;
 import alb.util.menu.Action;
@@ -18,7 +19,7 @@ import com.sdi.client.util.Jndi;
 public class NuevaTareaAction implements Action{
 	private static final String JMS_CONNECTION_FACTORY =
 			"jms/RemoteConnectionFactory";
-	private static final String NOTANEITOR_QUEUE = "jms/queue/ClientQueue";
+	private static final String NOTANEITOR_QUEUE = "jms/queue/TaskManager";
 
 	private Connection con;
 	private Session session;
@@ -35,16 +36,19 @@ public class NuevaTareaAction implements Action{
 			}
 
 
-			Long idCat = Console.readLong("Id categoria (Blanco para sin categoria)");
+			Long idCat = Console.readLong("Id categoria "
+					+ "(Blanco para sin categoria)");
 
-			String comment = Console.readString("Comentario (Blanco para sin comentario)");
+			String comment = Console.readString("Comentario "
+					+ "(Blanco para sin comentario)");
 
 			String user = Console.readString("Usuario");
 			String password = Console.readString("password");
-			
+
 			initialize();
 
-			MapMessage msg = createMessage(user, password, title, idCat, comment);
+			MapMessage msg = createMessage(user, password,
+					title, idCat, comment);
 			Destination queue = this.session.createTemporaryQueue();
 			msg.setJMSReplyTo( queue);
 
@@ -69,12 +73,23 @@ public class NuevaTareaAction implements Action{
 		}
 	}
 
-	private Boolean procesarMensaje(Message msgRecibido) {
-		// TODO Auto-generated method stub
-		return null;
+	private Boolean procesarMensaje(Message msgRecibido) throws JMSException {
+		if (!messageOfExpectedType(msgRecibido)) { 
+			System.out.println("Not of expected type " + msgRecibido);
+			return false;
+		}
+
+		TextMessage msg= (TextMessage) msgRecibido;
+
+		if(msg.getText().contains("Error")){
+			return false;
+		}
+
+		return true;
 	}
 
-	private MapMessage createMessage(String user, String password, String title,
+	private MapMessage createMessage(String user, String password,
+			String title,
 			Long idCat, String comment) throws JMSException {
 		MapMessage msg = session.createMapMessage();
 		msg.setString("command", "NuevaTarea");
@@ -97,4 +112,9 @@ public class NuevaTareaAction implements Action{
 		sender = session.createProducer(queue);
 		con.start();
 	}
+
+	private boolean messageOfExpectedType(Message m) {
+		return m instanceof TextMessage;
+	}
+
 }

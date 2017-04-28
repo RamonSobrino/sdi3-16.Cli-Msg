@@ -10,6 +10,7 @@ import javax.jms.MapMessage;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
+import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
 import alb.util.console.Console;
@@ -22,13 +23,13 @@ public class VistaTareasRetrasadasAction implements Action {
 
 	private static final String JMS_CONNECTION_FACTORY =
 			"jms/RemoteConnectionFactory";
-	private static final String NOTANEITOR_QUEUE = "jms/queue/ClientQueue";
-	
+	private static final String NOTANEITOR_QUEUE = "jms/queue/TaskManager";
+
 	private Connection con;
 	private Session session;
 	private MessageProducer sender;
 	private MessageConsumer consumer;
-	
+
 	@Override
 	public void execute() throws Exception {
 		try {
@@ -36,23 +37,26 @@ public class VistaTareasRetrasadasAction implements Action {
 			String password = Console.readString("password");
 
 			initialize();
-			
+
 			MapMessage msg = createMessage(user, password);
 			Destination queue = this.session.createTemporaryQueue();
 			msg.setJMSReplyTo( queue);
-			
+
 			sender.send(msg);
-			
+
 			consumer = session.createConsumer(queue);
-			
+
 			Message msgRecibido = consumer.receive();
-						
+
 			List<Task> tasks = procesarMensaje(msgRecibido);
 
 			Console.println("Tareas");
-			Console.printf("%6s %20s %20s %20s\n", "Id", "Titulo", "Fecha Creacion", "Planeada");
+			Console.printf("%6s %20s %20s %20s\n", "Id", "Titulo", 
+					"Fecha Creacion", "Planeada");
 			for (Task task : tasks) {
-				Console.printf("%6d %20s %20s %20s\n", task.getId(), task.getTitle(), task.getCreated(),task.getPlanned().toString());
+				Console.printf("%6d %20s %20s %20s\n", task.getId(), 
+						task.getTitle(), task.getCreated(),
+						task.getPlanned().toString());
 			}
 		} catch (JMSException e) {
 			// TODO Auto-generated catch block
@@ -60,20 +64,57 @@ public class VistaTareasRetrasadasAction implements Action {
 		}
 
 	}
-	
 
-	private List<Task> procesarMensaje(Message msgRecibido) {
-		// TODO Auto-generated method stub
-		return null;
+
+	private List<Task> procesarMensaje(Message msgRecibido) 
+			throws JMSException {
+		if (!messageOfExpectedType(msgRecibido)) { 
+			System.out.println("Not of expected type " + msgRecibido);
+			return null;
+		}
+
+		ObjectMessage msg= (ObjectMessage) msgRecibido;
+
+		Object ob = msg.getObject();
+		if (!messageOfExpectedType(ob)) { 
+			System.out.println("Not of expected type " + ob);
+			return null;
+		}
+
+		@SuppressWarnings("unchecked")
+		List<Task> lista = (List<Task>)ob;
+		return lista;
 	}
 
-	private MapMessage createMessage(String user, String password) throws JMSException {
+	private boolean messageOfExpectedType(Message msgRecibido) {
+		return msgRecibido instanceof ObjectMessage;
+	}
+
+	private boolean messageOfExpectedType(Object objeto) {
+		if(objeto instanceof List<?>){
+			List<?> lista = (List<?>)objeto;
+			if(lista.get(0) instanceof Task)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else{
+			return false;
+		}
+	}
+
+	private MapMessage createMessage(String user, String password) 
+			throws JMSException {
 		MapMessage msg = session.createMapMessage();
 		msg.setString("command", "TareasRetrasadas");
 		msg.setString("user", user);
 		msg.setString("password", password);
-		
-		
+
+
 		return msg;		
 	}
 

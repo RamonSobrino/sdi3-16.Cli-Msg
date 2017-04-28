@@ -11,6 +11,7 @@ import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
+import javax.jms.TextMessage;
 
 import alb.util.console.Console;
 import alb.util.menu.Action;
@@ -21,7 +22,7 @@ public class MarcarCompletadaAction implements Action {
 
 	private static final String JMS_CONNECTION_FACTORY =
 			"jms/RemoteConnectionFactory";
-	private static final String NOTANEITOR_QUEUE = "jms/queue/ClientQueue";
+	private static final String NOTANEITOR_QUEUE = "jms/queue/TaskManager";
 
 	private Connection con;
 	private Session session;
@@ -51,11 +52,11 @@ public class MarcarCompletadaAction implements Action {
 
 			if(procesarMensaje(msgRecibido))
 			{
-				Console.println("Nueva tarea creada");
+				Console.println("Tarea marcada como finalizada");
 			}
 			else
 			{
-				Console.println("Nueva tarea No creada");
+				Console.println("Tarea NO marcada como finalizada");
 			}
 
 		} catch (JMSException e) {
@@ -64,12 +65,23 @@ public class MarcarCompletadaAction implements Action {
 		}
 	}
 
-	private Boolean procesarMensaje(Message msgRecibido) {
-		// TODO Auto-generated method stub
-		return null;
+	private Boolean procesarMensaje(Message msgRecibido) throws JMSException {
+		if (!messageOfExpectedType(msgRecibido)) { 
+			System.out.println("Not of expected type " + msgRecibido);
+			return false;
+		}
+
+		TextMessage msg= (TextMessage) msgRecibido;
+
+		if(msg.getText().contains("Error")){
+			return false;
+		}
+
+		return true;
 	}
 
-	private MapMessage createMessage(String user, String password, Long id) throws JMSException {
+	private MapMessage createMessage(String user, String password, Long id) 
+			throws JMSException {
 		MapMessage msg = session.createMapMessage();
 		msg.setString("command", "FinalizarTarea");
 		msg.setString("user", user);
@@ -88,5 +100,9 @@ public class MarcarCompletadaAction implements Action {
 		session = con.createSession(false, Session.AUTO_ACKNOWLEDGE);
 		sender = session.createProducer(queue);
 		con.start();
+	}
+
+	private boolean messageOfExpectedType(Message m) {
+		return m instanceof TextMessage;
 	}
 }
