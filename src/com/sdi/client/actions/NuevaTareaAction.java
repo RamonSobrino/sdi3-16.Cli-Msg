@@ -107,7 +107,7 @@ public class NuevaTareaAction implements Action{
 		ConnectionFactory factory =
 				(ConnectionFactory) Jndi.find( JMS_CONNECTION_FACTORY );
 		Destination queue = (Destination) Jndi.find( NOTANEITOR_QUEUE );
-		con = factory.createConnection();
+		con = factory.createConnection("sdi","password");
 		session = con.createSession(false, Session.AUTO_ACKNOWLEDGE);
 		sender = session.createProducer(queue);
 		con.start();

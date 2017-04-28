@@ -50,6 +50,8 @@ public class VistaTareasHoyAction implements Action {
 
 			List<Task> tasks = procesarMensaje(msgRecibido);
 
+			this.session.close();
+			this.con.close();
 			Console.println("Tareas");
 			Console.printf("%6s %20s %20s %20s\n", "Id", "Titulo",
 					"Fecha Creacion", "Planeada");
@@ -60,7 +62,10 @@ public class VistaTareasHoyAction implements Action {
 			}
 		} catch (JMSException e) {
 			// TODO Auto-generated catch block
+			this.session.close();
+			this.con.close();
 			e.printStackTrace();
+			
 		}
 
 	}
@@ -122,7 +127,7 @@ public class VistaTareasHoyAction implements Action {
 		ConnectionFactory factory =
 				(ConnectionFactory) Jndi.find( JMS_CONNECTION_FACTORY );
 		Destination queue = (Destination) Jndi.find( NOTANEITOR_QUEUE );
-		con = factory.createConnection();
+		con = factory.createConnection("sdi","password");
 		session = con.createSession(false, Session.AUTO_ACKNOWLEDGE);
 		sender = session.createProducer(queue);
 		con.start();

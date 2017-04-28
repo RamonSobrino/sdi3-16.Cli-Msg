@@ -26,8 +26,8 @@ public class MainMenu extends BaseMenu{
 	}
 
 	public static void main(String[] args) {
-		user = Console.readString("User");
-		password = Console.readString("Password");
+		//user = Console.readString("User");
+		//password = Console.readString("Password");
 		new MainMenu().execute();
 	}
 }
