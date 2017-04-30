@@ -4,14 +4,13 @@ import uo.sdi.client.actions.MarcarCompletadaAction;
 import uo.sdi.client.actions.NuevaTareaAction;
 import uo.sdi.client.actions.VistaTareasHoyAction;
 import uo.sdi.client.actions.VistaTareasRetrasadasAction;
+import uo.sdi.client.util.MsgConfig;
 import alb.util.console.Console;
 import alb.util.menu.BaseMenu;
 
 public class MainMenu extends BaseMenu{
 	
-	public final static String REST_SERVICE_URL = "http://localhost:8280/sdi2-16WEB/rest/UserServicesRest";
-	public static String user;
-	public static String password;
+
 	
 	public MainMenu() {
 		menuOptions = new Object[][] {
@@ -25,8 +24,13 @@ public class MainMenu extends BaseMenu{
 	}
 
 	public static void main(String[] args) {
-		//user = Console.readString("User");
-		//password = Console.readString("Password");
+		String user = Console.readString("User");
+		String password = Console.readString("Password");
+		
+		MsgConfig mconf = MsgConfig.getInstance();
+		mconf.setUser(user);
+		mconf.setPassword(password);
+		
 		new MainMenu().execute();
 	}
 }

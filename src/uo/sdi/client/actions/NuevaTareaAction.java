@@ -12,18 +12,16 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import uo.sdi.client.util.Jndi;
+import uo.sdi.client.util.MsgConfig;
 import alb.util.console.Console;
 import alb.util.menu.Action;
 
 public class NuevaTareaAction implements Action{
-	private static final String JMS_CONNECTION_FACTORY =
-			"jms/RemoteConnectionFactory";
-	private static final String NOTANEITOR_QUEUE = "jms/queue/TaskManager";
-
 	private Connection con;
 	private Session session;
 	private MessageProducer sender;
 	private MessageConsumer consumer;
+	private MsgConfig mconf;
 
 	@Override
 	public void execute() throws Exception {
@@ -41,8 +39,10 @@ public class NuevaTareaAction implements Action{
 			String comment = Console.readString("Comentario "
 					+ "(Blanco para sin comentario)");
 
-			String user = Console.readString("Usuario");
-			String password = Console.readString("password");
+			this.mconf = MsgConfig.getInstance();
+
+			String user = mconf.getUser();
+			String password = mconf.getPassword();
 
 			initialize();
 
@@ -66,8 +66,10 @@ public class NuevaTareaAction implements Action{
 				Console.println("Nueva tarea No creada");
 			}
 
+			close();
+
 		} catch (JMSException e) {
-			// TODO Auto-generated catch block
+			close();
 			e.printStackTrace();
 		}
 	}
@@ -104,8 +106,10 @@ public class NuevaTareaAction implements Action{
 
 	private void initialize() throws JMSException {
 		ConnectionFactory factory =
-				(ConnectionFactory) Jndi.find( JMS_CONNECTION_FACTORY );
-		Destination queue = (Destination) Jndi.find( NOTANEITOR_QUEUE );
+				(ConnectionFactory) Jndi.find( 
+						this.mconf.getJMS_CONNECTION_FACTORY());
+		Destination queue = (Destination) Jndi.find(
+				this.mconf.getNOTANEITOR_QUEUE());
 		con = factory.createConnection("sdi","password");
 		session = con.createSession(false, Session.AUTO_ACKNOWLEDGE);
 		sender = session.createProducer(queue);
@@ -115,5 +119,12 @@ public class NuevaTareaAction implements Action{
 	private boolean messageOfExpectedType(Message m) {
 		return m instanceof TextMessage;
 	}
-
+	
+	private void close() throws JMSException
+	{
+		this.consumer.close();
+		this.sender.close();
+		this.session.close();
+		this.con.close();
+	}
 }
