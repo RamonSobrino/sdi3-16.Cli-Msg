@@ -70,7 +70,7 @@ public class VistaTareasHoyAction implements Action {
 			for (Task task : tasks) {
 				Console.printf("%6d %20s %20s %20s\n", task.getId(), 
 						task.getTitle(), task.getCreated(),
-						task.getPlanned().toString());
+						task.getPlanned());
 			}
 			close();
 
